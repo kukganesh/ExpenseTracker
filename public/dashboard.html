@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>SpendLens – Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Clash+Display:wght@400;500;600;700&family=Satoshi:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <!-- Fallback fonts if Clash/Satoshi not available -->
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* ═══════════════════════════════════════════════════
+       TOKENS
+    ═══════════════════════════════════════════════════ */
+    :root {
+      /* Light warm background with subtle colour */
+      --bg:           #f0eff8;
+      --bg2:          #e8e6f5;
+      --bg-mesh:      radial-gradient(ellipse 80% 60% at 20% 10%, #ddd8f8 0%, transparent 55%),
+                      radial-gradient(ellipse 60% 50% at 80% 5%,  #fce8f3 0%, transparent 50%),
+                      radial-gradient(ellipse 70% 60% at 50% 95%, #d6ecf9 0%, transparent 55%),
+                      linear-gradient(160deg, #ede9fb 0%, #f4eff9 40%, #e9f3fd 80%, #faf0f7 100%);
+
+      /* Glass tile surfaces */
+      --glass:        rgba(255,255,255,0.62);
+      --glass-hover:  rgba(255,255,255,0.82);
+      --glass-border: rgba(255,255,255,0.85);
+      --glass-shadow: 0 4px 24px rgba(120,100,200,0.10), 0 1px 4px rgba(120,100,200,0.06);
+      --glass-shadow-hover: 0 12px 40px rgba(100,80,200,0.16), 0 2px 8px rgba(100,80,200,0.08);
+
+      /* Topbar */
+      --topbar:       rgba(255,255,255,0.72);
+      --topbar-border:rgba(200,195,230,0.4);
+
+      /* Text */
+      --text:         #1a1535;
+      --text2:        #4a4570;
+      --muted:        #8b87b0;
+      --muted2:       #b8b5d0;
+
+      /* Accent colours */
+      --expense:      #e0534a;
+      --expense-bg:   rgba(224,83,74,0.10);
+      --expense-glow: rgba(224,83,74,0.25);
+
+      --refund:       #10a37f;
+      --refund-bg:    rgba(16,163,127,0.10);
+      --refund-glow:  rgba(16,163,127,0.22);
+
+      --cashback:     #7c5cfc;
+      --cashback-bg:  rgba(124,92,252,0.10);
+      --cashback-glow:rgba(124,92,252,0.22);
+
+      --net:          #d97706;
+      --net-bg:       rgba(217,119,6,0.10);
+      --net-glow:     rgba(217,119,6,0.22);
+
+      /* Borders */
+      --border:       rgba(160,150,210,0.18);
+      --border2:      rgba(160,150,210,0.30);
+
+      --radius:       18px;
+      --radius-sm:    10px;
+      --radius-pill:  100px;
+
+      --font:         'Plus Jakarta Sans', 'Satoshi', system-ui, sans-serif;
+      --mono:         'DM Mono', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      background-image: var(--bg-mesh);
+      background-attachment: fixed;
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Subtle animated noise grain overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      opacity: 0.4;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       TOPBAR — frosted glass
+    ═══════════════════════════════════════════════════ */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 36px;
+      height: 62px;
+      background: var(--topbar);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid var(--topbar-border);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.8), 0 4px 20px rgba(110,90,200,0.06);
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-mark {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #7c5cfc 0%, #e0534a 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 10px rgba(124,92,252,0.35);
+      flex-shrink: 0;
+    }
+
+    .logo-mark svg { width: 16px; height: 16px; fill: white; }
+
+    .topbar-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+
+    .topbar-email {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: var(--mono);
+      padding: 3px 8px;
+      background: rgba(124,92,252,0.07);
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(124,92,252,0.12);
+    }
+
+    .topbar-actions { display: flex; gap: 8px; }
+
+    /* ─── Buttons ─── */
+    .btn {
+      padding: 7px 16px;
+      border-radius: var(--radius-sm);
+      border: none;
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+      letter-spacing: -0.01em;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0);
+      transition: background 0.15s;
+    }
+
+    .btn:hover::after { background: rgba(255,255,255,0.12); }
+    .btn:hover  { transform: translateY(-1px); }
+    .btn:active { transform: translateY(0) scale(0.98); }
+
+    .btn-connect {
+      background: rgba(255,255,255,0.7);
+      color: var(--text2);
+      border: 1px solid var(--border2);
+      backdrop-filter: blur(8px);
+    }
+
+    .btn-connect:hover { box-shadow: 0 4px 16px rgba(100,80,200,0.12); }
+
+    .btn-sync {
+      background: linear-gradient(135deg, #7c5cfc 0%, #9f79fd 100%);
+      color: white;
+      box-shadow: 0 4px 14px rgba(124,92,252,0.40);
+    }
+
+    .btn-sync:hover  { box-shadow: 0 6px 20px rgba(124,92,252,0.52); }
+    .btn-sync:disabled {
+      opacity: 0.55; cursor: not-allowed;
+      transform: none; box-shadow: none;
+    }
+
+    .btn-logout {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-logout:hover { background: rgba(224,83,74,0.08); color: var(--expense); border-color: var(--expense); }
+
+    /* ═══════════════════════════════════════════════════
+       MAIN LAYOUT
+    ═══════════════════════════════════════════════════ */
+    .main {
+      position: relative;
+      z-index: 1;
+      padding: 36px 36px 64px;
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--border2) 0%, transparent 100%);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       STAT CARDS — glassmorphism
+    ═══════════════════════════════════════════════════ */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 36px;
+    }
+
+    @media (max-width: 900px) { .stats-grid { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width: 520px) { .stats-grid { grid-template-columns: 1fr; } }
+
+    .stat-card {
+      background: var(--glass);
+      backdrop-filter: blur(16px) saturate(160%);
+      -webkit-backdrop-filter: blur(16px) saturate(160%);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      padding: 24px 22px 20px;
+      box-shadow: var(--glass-shadow);
+      position: relative;
+      overflow: hidden;
+      cursor: default;
+      transition: transform 0.22s cubic-bezier(.22,.68,0,1.2),
+                  box-shadow 0.22s ease,
+                  border-color 0.22s ease;
+
+      /* Staggered entrance */
+      opacity: 0;
+      transform: translateY(16px);
+      animation: cardIn 0.5s cubic-bezier(.22,.68,0,1.2) forwards;
+    }
+
+    .stat-card:nth-child(1) { animation-delay: 0.05s; }
+    .stat-card:nth-child(2) { animation-delay: 0.12s; }
+    .stat-card:nth-child(3) { animation-delay: 0.19s; }
+    .stat-card:nth-child(4) { animation-delay: 0.26s; }
+
+    @keyframes cardIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px) scale(1.01);
+      box-shadow: var(--glass-shadow-hover);
+    }
+
+    /* Coloured top stripe */
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+
+    /* Radial glow in corner */
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      top: -30px; right: -30px;
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      opacity: 0.25;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .stat-card:hover::after { opacity: 0.45; }
+
+    .stat-card.expense::before  { background: linear-gradient(90deg, var(--expense), #f87171); }
+    .stat-card.expense::after   { background: radial-gradient(circle, var(--expense), transparent 70%); }
+
+    .stat-card.refund::before   { background: linear-gradient(90deg, var(--refund), #34d399); }
+    .stat-card.refund::after    { background: radial-gradient(circle, var(--refund), transparent 70%); }
+
+    .stat-card.cashback::before { background: linear-gradient(90deg, var(--cashback), #a78bfa); }
+    .stat-card.cashback::after  { background: radial-gradient(circle, var(--cashback), transparent 70%); }
+
+    .stat-card.net::before      { background: linear-gradient(90deg, var(--net), #fbbf24); }
+    .stat-card.net::after       { background: radial-gradient(circle, var(--net), transparent 70%); }
+
+    .stat-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      margin-bottom: 16px;
+      position: relative; z-index: 1;
+    }
+
+    .stat-card.expense  .stat-icon { background: var(--expense-bg);  box-shadow: 0 0 0 4px var(--expense-glow); }
+    .stat-card.refund   .stat-icon { background: var(--refund-bg);   box-shadow: 0 0 0 4px var(--refund-glow); }
+    .stat-card.cashback .stat-icon { background: var(--cashback-bg); box-shadow: 0 0 0 4px var(--cashback-glow); }
+    .stat-card.net      .stat-icon { background: var(--net-bg);      box-shadow: 0 0 0 4px var(--net-glow); }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+      position: relative; z-index: 1;
+    }
+
+    .stat-value {
+      font-family: var(--mono);
+      font-size: 30px;
+      font-weight: 500;
+      line-height: 1;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+      position: relative; z-index: 1;
+      /* Number count-up animation */
+      transition: opacity 0.3s;
+    }
+
+    .stat-card.expense  .stat-value { color: var(--expense); }
+    .stat-card.refund   .stat-value { color: var(--refund); }
+    .stat-card.cashback .stat-value { color: var(--cashback); }
+    .stat-card.net      .stat-value { color: var(--net); }
+
+    .stat-sub {
+      font-size: 12px;
+      color: var(--muted);
+      position: relative; z-index: 1;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       BOTTOM ROW
+    ═══════════════════════════════════════════════════ */
+    .bottom-row {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    @media (max-width: 860px) { .bottom-row { grid-template-columns: 1fr; } }
+
+    /* ═══════════════════════════════════════════════════
+       GLASS PANELS
+    ═══════════════════════════════════════════════════ */
+    .panel {
+      background: var(--glass);
+      backdrop-filter: blur(16px) saturate(160%);
+      -webkit-backdrop-filter: blur(16px) saturate(160%);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--glass-shadow);
+      opacity: 0;
+      animation: panelIn 0.55s cubic-bezier(.22,.68,0,1.2) forwards;
+    }
+
+    .panel:nth-child(1) { animation-delay: 0.3s; }
+    .panel:nth-child(2) { animation-delay: 0.38s; }
+
+    @keyframes panelIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       FILTER PILLS & MERCHANT SELECT
+    ═══════════════════════════════════════════════════ */
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .type-pill {
+      padding: 5px 13px;
+      border-radius: var(--radius-pill);
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border2);
+      cursor: pointer;
+      transition: all 0.18s cubic-bezier(.22,.68,0,1.2);
+      background: rgba(255,255,255,0.55);
+      color: var(--muted);
+      letter-spacing: -0.01em;
+      backdrop-filter: blur(8px);
+    }
+
+    .type-pill:hover { transform: scale(1.05); background: rgba(255,255,255,0.8); color: var(--text2); }
+
+    .type-pill.active-all {
+      background: linear-gradient(135deg, rgba(217,119,6,0.15), rgba(251,191,36,0.12));
+      color: var(--net); border-color: rgba(217,119,6,0.35);
+      box-shadow: 0 2px 8px rgba(217,119,6,0.15);
+    }
+
+    .type-pill.active-expense {
+      background: linear-gradient(135deg, rgba(224,83,74,0.15), rgba(248,113,113,0.10));
+      color: var(--expense); border-color: rgba(224,83,74,0.35);
+      box-shadow: 0 2px 8px rgba(224,83,74,0.15);
+    }
+
+    .type-pill.active-refund {
+      background: linear-gradient(135deg, rgba(16,163,127,0.15), rgba(52,211,153,0.10));
+      color: var(--refund); border-color: rgba(16,163,127,0.35);
+      box-shadow: 0 2px 8px rgba(16,163,127,0.15);
+    }
+
+    .type-pill.active-cashback {
+      background: linear-gradient(135deg, rgba(124,92,252,0.15), rgba(167,139,250,0.10));
+      color: var(--cashback); border-color: rgba(124,92,252,0.35);
+      box-shadow: 0 2px 8px rgba(124,92,252,0.15);
+    }
+
+    .filter-select {
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border2);
+      background: rgba(255,255,255,0.65);
+      backdrop-filter: blur(8px);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .filter-select:focus {
+      border-color: rgba(124,92,252,0.45);
+      box-shadow: 0 0 0 3px rgba(124,92,252,0.10);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       MERCHANT NET BAR
+    ═══════════════════════════════════════════════════ */
+    .merchant-net-bar {
+      display: none;
+      background: linear-gradient(135deg, rgba(124,92,252,0.07) 0%, rgba(255,255,255,0.5) 100%);
+      border: 1px solid rgba(124,92,252,0.22);
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      margin-bottom: 14px;
+      align-items: center;
+      gap: 0;
+      flex-wrap: wrap;
+    }
+
+    .merchant-net-bar.visible {
+      display: flex;
+      animation: slideDown 0.25s cubic-bezier(.22,.68,0,1.2);
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .net-bar-name {
+      font-size: 13px;
+      font-weight: 700;
+      margin-right: 18px;
+      flex-shrink: 0;
+      color: var(--text);
+    }
+
+    .net-bar-stats {
+      display: flex; gap: 16px; flex-wrap: wrap; flex: 1;
+    }
+
+    .net-bar-stat {
+      display: flex; flex-direction: column; gap: 2px;
+    }
+
+    .net-bar-stat-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--muted2);
+    }
+
+    .net-bar-stat-value {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+    }
+
+    .net-bar-stat-value.expense  { color: var(--expense); }
+    .net-bar-stat-value.refund   { color: var(--refund); }
+    .net-bar-stat-value.cashback { color: var(--cashback); }
+    .net-bar-stat-value.net      { color: var(--net); }
+
+    .net-bar-divider {
+      width: 1px; height: 28px;
+      background: var(--border2);
+      margin: 0 2px; flex-shrink: 0;
+      align-self: center;
+    }
+
+    .net-bar-clear {
+      background: rgba(160,150,210,0.10);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 13px;
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin-left: auto;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .net-bar-clear:hover {
+      background: rgba(224,83,74,0.12);
+      border-color: rgba(224,83,74,0.3);
+      color: var(--expense);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       TABLE
+    ═══════════════════════════════════════════════════ */
+    .tx-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 4px;
+    }
+
+    .tx-table th {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--muted2);
+      padding: 4px 12px 8px;
+      text-align: left;
+    }
+
+    .tx-table td {
+      padding: 11px 12px;
+      font-size: 13px;
+      vertical-align: middle;
+      background: rgba(255,255,255,0.45);
+      border-top: 1px solid rgba(255,255,255,0.8);
+      border-bottom: 1px solid rgba(160,150,210,0.08);
+      transition: background 0.15s;
+    }
+
+    .tx-table td:first-child {
+      border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+      border-left: 1px solid rgba(255,255,255,0.8);
+    }
+
+    .tx-table td:last-child {
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      border-right: 1px solid rgba(255,255,255,0.8);
+    }
+
+    .tx-table tr:hover td { background: rgba(255,255,255,0.72); }
+
+    /* Row entrance animation */
+    .tx-table tbody tr {
+      opacity: 0;
+      animation: rowIn 0.35s ease forwards;
+    }
+
+    @keyframes rowIn {
+      from { opacity: 0; transform: translateX(-6px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .merchant-cell {
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--text);
+    }
+
+    .merchant-icon {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,0.7);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+
+    .order-id {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: block;
+    }
+
+    .type-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px 3px 7px;
+      border-radius: var(--radius-pill);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border: 1px solid transparent;
+    }
+
+    .type-badge::before {
+      content: '';
+      width: 5px; height: 5px;
+      border-radius: 50%;
+    }
+
+    .type-badge.expense  {
+      background: var(--expense-bg);
+      color: var(--expense);
+      border-color: rgba(224,83,74,0.20);
+    }
+    .type-badge.expense::before  { background: var(--expense); }
+
+    .type-badge.refund   {
+      background: var(--refund-bg);
+      color: var(--refund);
+      border-color: rgba(16,163,127,0.20);
+    }
+    .type-badge.refund::before   { background: var(--refund); }
+
+    .type-badge.cashback {
+      background: var(--cashback-bg);
+      color: var(--cashback);
+      border-color: rgba(124,92,252,0.20);
+    }
+    .type-badge.cashback::before { background: var(--cashback); }
+
+    .amount-cell {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      color: var(--refund);
+    }
+
+    .amount-cell.expense  { color: var(--expense); }
+    .amount-cell.cashback { color: var(--cashback); }
+
+    .date-cell {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: var(--mono);
+      white-space: nowrap;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       EMPTY STATE
+    ═══════════════════════════════════════════════════ */
+    .empty-state {
+      text-align: center;
+      padding: 52px 24px;
+    }
+
+    .empty-icon {
+      font-size: 44px;
+      margin-bottom: 14px;
+      filter: grayscale(0.2);
+    }
+
+    .empty-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text2);
+      margin-bottom: 6px;
+    }
+
+    .empty-sub {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       TOAST
+    ═══════════════════════════════════════════════════ */
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      padding: 13px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      z-index: 999;
+      transform: translateY(90px) scale(0.95);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(.22,.68,0,1.2);
+      max-width: 340px;
+      backdrop-filter: blur(16px);
+      letter-spacing: -0.01em;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+
+    #toast.show { transform: translateY(0) scale(1); opacity: 1; }
+
+    #toast.success {
+      background: rgba(16,163,127,0.15);
+      border: 1px solid rgba(16,163,127,0.35);
+      color: var(--refund);
+    }
+
+    #toast.error {
+      background: rgba(224,83,74,0.12);
+      border: 1px solid rgba(224,83,74,0.35);
+      color: var(--expense);
+    }
+
+    #toast.info {
+      background: rgba(124,92,252,0.12);
+      border: 1px solid rgba(124,92,252,0.30);
+      color: var(--cashback);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       SPINNER
+    ═══════════════════════════════════════════════════ */
+    .spinner {
+      display: inline-block;
+      width: 13px; height: 13px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ═══════════════════════════════════════════════════
+       CHART CANVAS
+    ═══════════════════════════════════════════════════ */
+    canvas { width: 100% !important; }
+
+    /* ═══════════════════════════════════════════════════
+       SCROLLBAR
+    ═══════════════════════════════════════════════════ */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(124,92,252,0.20); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(124,92,252,0.35); }
+
+  </style>
+</head>
+<body>
+
+<!-- ── TOPBAR ────────────────────────────────────────── -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm.75 14.5v1.25a.75.75 0 01-1.5 0V16.5a4.75 4.75 0 01-3.5-4.5.75.75 0 011.5 0 3.25 3.25 0 006.5 0c0-1.8-1.45-3.25-3.25-3.25S9.25 10.2 9.25 12a.75.75 0 01-1.5 0 4.75 4.75 0 014-4.675V6.25a.75.75 0 011.5 0v1.075A4.75 4.75 0 0116.75 12a4.75 4.75 0 01-4 4.5z"/>
+      </svg>
+    </div>
+    <span class="topbar-title">SpendLens</span>
+    <span class="topbar-email" id="userEmail"></span>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn btn-connect" onclick="connectGmail()">Connect Gmail</button>
+    <button class="btn btn-sync"    id="syncBtn" onclick="syncNow()">Sync Now</button>
+    <button class="btn btn-logout"  onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<!-- ── MAIN ──────────────────────────────────────────── -->
+<div class="main">
+
+  <!-- STATS -->
+  <p class="section-label">Overview</p>
+  <div class="stats-grid">
+
+    <div class="stat-card expense">
+      <div class="stat-icon">💸</div>
+      <div class="stat-label">Total Expenses</div>
+      <div class="stat-value" id="totalExpense">₹—</div>
+      <div class="stat-sub" id="expenseCount">— transactions</div>
+    </div>
+
+    <div class="stat-card refund">
+      <div class="stat-icon">↩️</div>
+      <div class="stat-label">Total Refunds</div>
+      <div class="stat-value" id="totalRefund">₹—</div>
+      <div class="stat-sub" id="refundCount">— transactions</div>
+    </div>
+
+    <div class="stat-card cashback">
+      <div class="stat-icon">🎁</div>
+      <div class="stat-label">Total Cashback</div>
+      <div class="stat-value" id="totalCashback">₹—</div>
+      <div class="stat-sub" id="cashbackCount">— transactions</div>
+    </div>
+
+    <div class="stat-card net">
+      <div class="stat-icon">📊</div>
+      <div class="stat-label">Net Spending</div>
+      <div class="stat-value" id="netSpending">₹—</div>
+      <div class="stat-sub">after refunds & cashback</div>
+    </div>
+
+  </div>
+
+  <!-- BREAKDOWN -->
+  <p class="section-label">Breakdown</p>
+  <div class="bottom-row">
+
+    <!-- CHART -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">By Merchant</span>
+      </div>
+      <div id="chartContainer">
+        <canvas id="merchantChart"></canvas>
+      </div>
+      <div id="chartEmpty" class="empty-state" style="display:none;">
+        <div class="empty-icon">📊</div>
+        <div class="empty-title">No data yet</div>
+        <div class="empty-sub">Sync Gmail to see spending breakdown</div>
+      </div>
+    </div>
+
+    <!-- TRANSACTIONS -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Transactions</span>
+        <span id="txCount" style="font-size:12px;color:var(--muted);font-family:var(--mono);"></span>
+      </div>
+
+      <div class="filter-row">
+        <span class="type-pill active-all" id="pill-all"      onclick="setPillFilter('all')">All</span>
+        <span class="type-pill"            id="pill-expense"  onclick="setPillFilter('expense')">Expenses</span>
+        <span class="type-pill"            id="pill-refund"   onclick="setPillFilter('refund')">Refunds</span>
+        <span class="type-pill"            id="pill-cashback" onclick="setPillFilter('cashback')">Cashback</span>
+        <select class="filter-select" id="merchantFilter" onchange="onMerchantChange()">
+          <option value="all">All Merchants</option>
+        </select>
+      </div>
+
+      <!-- MERCHANT NET BAR -->
+      <div class="merchant-net-bar" id="merchantNetBar">
+        <span class="net-bar-name" id="netBarName"></span>
+        <div class="net-bar-stats">
+          <div class="net-bar-stat">
+            <span class="net-bar-stat-label">Spent</span>
+            <span class="net-bar-stat-value expense"  id="netBarExpense">—</span>
+          </div>
+          <div class="net-bar-divider"></div>
+          <div class="net-bar-stat">
+            <span class="net-bar-stat-label">Refunded</span>
+            <span class="net-bar-stat-value refund"   id="netBarRefund">—</span>
+          </div>
+          <div class="net-bar-divider"></div>
+          <div class="net-bar-stat">
+            <span class="net-bar-stat-label">Cashback</span>
+            <span class="net-bar-stat-value cashback" id="netBarCashback">—</span>
+          </div>
+          <div class="net-bar-divider"></div>
+          <div class="net-bar-stat">
+            <span class="net-bar-stat-label">Net Spend</span>
+            <span class="net-bar-stat-value net"      id="netBarNet">—</span>
+          </div>
+        </div>
+        <button class="net-bar-clear" onclick="clearMerchantFilter()" title="Clear">✕</button>
+      </div>
+
+      <div id="txContent">
+        <table class="tx-table">
+          <thead>
+            <tr>
+              <th>Merchant</th>
+              <th>Order ID</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="transactionTable"></tbody>
+        </table>
+        <div id="txEmpty" class="empty-state" style="display:none;">
+          <div class="empty-icon">📭</div>
+          <div class="empty-title">No transactions found</div>
+          <div class="empty-sub">Connect Gmail and sync to import transactions</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+
+let allTransactions  = [];
+let merchantSummary  = [];
+let chartInstance    = null;
+let chartColorMap    = {};
+let activeTypeFilter = 'all';
+
+// ── Toast ──
+function showToast(msg, type = 'info', duration = 4000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `show ${type}`;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.className = '', duration);
+}
+
+// ── Load user email ──
+async function loadStatus() {
+  const res = await fetch('/api/status', { credentials: 'include' });
+  const data = await res.json();
+  if (!data.loggedIn) { window.location.href = '/'; return; }
+  document.getElementById('userEmail').textContent = data.email;
+}
+
+// ── Load summary ──
+async function loadSummary() {
+  const res = await fetch('/api/summary', { credentials: 'include' });
+  if (!res.ok) return;
+  const data = await res.json();
+  animateValue('totalExpense',  data.total_expense);
+  animateValue('totalRefund',   data.total_refund);
+  animateValue('totalCashback', data.total_cashback);
+  animateValue('netSpending',   data.net_spending);
+  document.getElementById('expenseCount').textContent  = data.expense_count  + ' transaction' + (data.expense_count  !== 1 ? 's' : '');
+  document.getElementById('refundCount').textContent   = data.refund_count   + ' transaction' + (data.refund_count   !== 1 ? 's' : '');
+  document.getElementById('cashbackCount').textContent = data.cashback_count + ' transaction' + (data.cashback_count !== 1 ? 's' : '');
+}
+
+// ── Animated number count-up ──
+function animateValue(id, target) {
+  const el  = document.getElementById(id);
+  const num = parseFloat(target) || 0;
+  const dur = 900;
+  const start = performance.now();
+  const ease  = t => t < 0.5 ? 2*t*t : -1+(4-2*t)*t; // easeInOut
+  function step(now) {
+    const p  = Math.min((now - start) / dur, 1);
+    const v  = num * ease(p);
+    el.textContent = '₹' + v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// ── Load transactions ──
+async function loadTransactions() {
+  const res = await fetch('/api/transactions', { credentials: 'include' });
+  if (!res.ok) return;
+  allTransactions = await res.json();
+  populateMerchantDropdown(allTransactions);
+  applyFilters();
+}
+
+// ── Merchant dropdown ──
+function populateMerchantDropdown(txs) {
+  const dropdown = document.getElementById('merchantFilter');
+  const current  = dropdown.value;
+  const merchants = [...new Set(txs.map(t => t.merchant_name).filter(Boolean))].sort();
+  dropdown.innerHTML = '<option value="all">All Merchants</option>';
+  merchants.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m; opt.textContent = m;
+    dropdown.appendChild(opt);
+  });
+  if (current !== 'all' && merchants.includes(current)) dropdown.value = current;
+}
+
+// ── Merchant filter change ──
+async function onMerchantChange() {
+  const merchant = document.getElementById('merchantFilter').value;
+  applyFilters();
+  if (merchant === 'all') hideMerchantNetBar();
+  else await loadMerchantDetail(merchant);
+}
+
+// ── Clear merchant filter ──
+function clearMerchantFilter() {
+  document.getElementById('merchantFilter').value = 'all';
+  hideMerchantNetBar();
+  applyFilters();
+}
+
+// ── Load & show merchant net bar ──
+async function loadMerchantDetail(merchant) {
+  const bar = document.getElementById('merchantNetBar');
+  bar.classList.remove('visible');
+  const res  = await fetch(`/api/merchant-detail?merchant=${encodeURIComponent(merchant)}`, { credentials: 'include' });
+  if (!res.ok) return;
+  const data = await res.json();
+  if (!data) return;
+
+  document.getElementById('netBarName').textContent     = data.merchant_name;
+  document.getElementById('netBarExpense').textContent  = '₹' + fmt(data.total_expense);
+  document.getElementById('netBarRefund').textContent   = '₹' + fmt(data.total_refund);
+  document.getElementById('netBarCashback').textContent = '₹' + fmt(data.total_cashback);
+
+  const net = parseFloat(data.net_spend);
+  const netEl = document.getElementById('netBarNet');
+  netEl.textContent = (net < 0 ? '−₹' : '₹') + fmt(Math.abs(net));
+  netEl.className = 'net-bar-stat-value ' + (net < 0 ? 'refund' : 'net');
+
+  bar.classList.add('visible');
+}
+
+function hideMerchantNetBar() {
+  document.getElementById('merchantNetBar').classList.remove('visible');
+}
+
+// ── Pill filter ──
+function setPillFilter(type) {
+  activeTypeFilter = type;
+  document.querySelectorAll('.type-pill').forEach(p => { p.className = 'type-pill'; });
+  const pill = document.getElementById('pill-' + type);
+  if (type === 'expense')  pill.className = 'type-pill active-expense';
+  if (type === 'refund')   pill.className = 'type-pill active-refund';
+  if (type === 'cashback') pill.className = 'type-pill active-cashback';
+  if (type === 'all')      pill.className = 'type-pill active-all';
+  applyFilters();
+}
+
+// ── Apply both filters ──
+function applyFilters() {
+  const merchant = document.getElementById('merchantFilter').value;
+  let filtered = [...allTransactions];
+  if (activeTypeFilter !== 'all') filtered = filtered.filter(tx => tx.type === activeTypeFilter);
+  if (merchant !== 'all')         filtered = filtered.filter(tx => tx.merchant_name === merchant);
+  renderTransactions(filtered);
+}
+
+// ── Render table ──
+function renderTransactions(txs) {
+  const tbody = document.getElementById('transactionTable');
+  const empty = document.getElementById('txEmpty');
+  const count = document.getElementById('txCount');
+
+  count.textContent = txs.length + ' result' + (txs.length !== 1 ? 's' : '');
+
+  if (txs.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    document.querySelector('.tx-table').style.display = 'none';
+    return;
+  }
+
+  empty.style.display = 'none';
+  document.querySelector('.tx-table').style.display = 'table';
+
+  tbody.innerHTML = txs.map((tx, i) => {
+    const initial  = (tx.merchant_name || '?').charAt(0).toUpperCase();
+    const color    = chartColorMap[tx.merchant_name] || '#8b87b0';
+    const dateStr  = tx.transaction_date
+      ? new Date(tx.transaction_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+      : '—';
+    const isExpense = tx.type === 'expense';
+    const amtPrefix = isExpense ? '−₹' : '+₹';
+    const amtClass  = isExpense ? 'amount-cell expense' :
+                      tx.type === 'cashback' ? 'amount-cell cashback' : 'amount-cell';
+    const delay     = Math.min(i * 30, 300);
+
+    return `<tr style="animation-delay:${delay}ms">
+      <td>
+        <div class="merchant-cell">
+          <div class="merchant-icon" style="background:${color}18;color:${color};border-color:${color}30">${initial}</div>
+          ${escHtml(tx.merchant_name || '—')}
+        </div>
+      </td>
+      <td><span class="order-id">${escHtml(tx.order_id || '—')}</span></td>
+      <td><span class="type-badge ${tx.type}">${tx.type}</span></td>
+      <td class="${amtClass}">${amtPrefix}${fmt(tx.amount)}</td>
+      <td class="date-cell">${dateStr}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Load merchant chart ──
+async function loadMerchantChart() {
+  const res = await fetch('/api/merchant-summary', { credentials: 'include' });
+  if (!res.ok) return;
+  merchantSummary = await res.json();
+
+  const container = document.getElementById('chartContainer');
+  const emptyMsg  = document.getElementById('chartEmpty');
+  const active    = merchantSummary.filter(d => parseFloat(d.total_expense) > 0);
+
+  if (!active.length) {
+    container.style.display = 'none';
+    emptyMsg.style.display = 'block';
+    return;
+  }
+
+  container.style.display = 'block';
+  emptyMsg.style.display = 'none';
+
+  const palette = [
+    '#7c5cfc','#e0534a','#10a37f','#f59e0b','#3b82f6',
+    '#ec4899','#14b8a6','#f97316','#8b5cf6','#06b6d4',
+    '#84cc16','#ef4444','#6366f1','#22c55e','#e879f9',
+  ];
+
+  chartColorMap = {};
+  active.forEach((d, i) => { chartColorMap[d.merchant_name] = palette[i % palette.length]; });
+
+  const labels = active.map(d => d.merchant_name || 'Unknown');
+  const values = active.map(d => parseFloat(d.total_expense));
+  const colors = active.map((_, i) => palette[i % palette.length]);
+
+  if (chartInstance) chartInstance.destroy();
+
+  const ctx = document.getElementById('merchantChart').getContext('2d');
+  chartInstance = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: colors.map(c => c + 'bb'),
+        hoverBackgroundColor: colors,
+        borderWidth: 3,
+        borderColor: 'rgba(255,255,255,0.9)',
+        hoverBorderColor: 'rgba(255,255,255,1)',
+        hoverOffset: 6,
+      }]
+    },
+    options: {
+      cutout: '64%',
+      animation: { animateScale: true, duration: 700, easing: 'easeOutQuart' },
+      onClick: (evt, elements) => {
+        if (!elements.length) return;
+        const merchant = labels[elements[0].index];
+        document.getElementById('merchantFilter').value = merchant;
+        applyFilters();
+        loadMerchantDetail(merchant);
+      },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#4a4570',
+            font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' },
+            padding: 14, boxWidth: 9, boxHeight: 9,
+            usePointStyle: true, pointStyle: 'circle',
+            generateLabels: chart => chart.data.labels.map((label, i) => ({
+              text: `${label}  ₹${fmt(active[i].total_expense)}`,
+              fillStyle: chart.data.datasets[0].backgroundColor[i],
+              hidden: false, index: i
+            }))
+          },
+          onClick: (e, item) => {
+            const merchant = active[item.index]?.merchant_name;
+            if (!merchant) return;
+            document.getElementById('merchantFilter').value = merchant;
+            applyFilters();
+            loadMerchantDetail(merchant);
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const d = active[ctx.dataIndex];
+              return [
+                ` Spent:    ₹${fmt(d.total_expense)}`,
+                ` Refunded: ₹${fmt(d.total_refund)}`,
+                ` Cashback: ₹${fmt(d.total_cashback)}`,
+                ` Net:      ₹${fmt(d.net_spend)}`,
+              ];
+            }
+          },
+          backgroundColor: 'rgba(255,255,255,0.92)',
+          borderColor: 'rgba(160,150,210,0.3)',
+          borderWidth: 1,
+          titleColor: '#1a1535',
+          bodyColor: '#4a4570',
+          padding: 14,
+          titleFont: { family: 'Plus Jakarta Sans', size: 13, weight: '700' },
+          bodyFont:  { family: 'DM Mono', size: 12 },
+          boxShadow: '0 4px 20px rgba(100,80,200,0.15)',
+          cornerRadius: 10,
+        }
+      }
+    }
+  });
+
+  applyFilters();
+}
+
+// ── Actions ──
+function connectGmail() { window.location.href = '/auth/google'; }
+
+async function syncNow() {
+  const btn = document.getElementById('syncBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Syncing…';
+  try {
+    const res  = await fetch('/api/gmail/import', { credentials: 'include' });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.message || 'Sync failed', 'error'); return; }
+    const msg = `✓ ${data.imported_count} new · ${data.duplicate_count} dupes · ${data.rejected_count ?? 0} promos blocked`;
+    showToast(msg, 'success', 5000);
+    await Promise.all([loadSummary(), loadTransactions(), loadMerchantChart()]);
+  } catch (err) {
+    showToast('Network error during sync', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sync Now';
+  }
+}
+
+async function logout() {
+  await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+  window.location.href = '/';
+}
+
+// ── Helpers ──
+function fmt(n) {
+  const num = parseFloat(n) || 0;
+  return num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ── Init ──
+(async () => {
+  await loadStatus();
+  await Promise.all([loadSummary(), loadTransactions(), loadMerchantChart()]);
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('connected') === 'true') {
+    showToast('Gmail connected successfully ✓', 'success');
+    history.replaceState(null, '', '/dashboard.html');
+  }
+  if (params.get('error') === 'oauth_failed') {
+    showToast('Gmail connection failed. Try again.', 'error');
+    history.replaceState(null, '', '/dashboard.html');
+  }
+})();
+</script>
+
+</body>
+</html>

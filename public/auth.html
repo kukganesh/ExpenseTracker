@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Spend Lens – Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #151820;
+      --surface2: #1c2030;
+      --border: rgba(255,255,255,0.07);
+      --accent: #22d3a5;
+      --text: #e8eaf0;
+      --muted: #6b7280;
+      --danger: #ef4444;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Sora', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 380px;
+      padding: 36px 32px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .logo-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+    }
+
+    .logo-text {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    h2 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 28px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    input {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus { border-color: var(--accent); }
+    input::placeholder { color: var(--muted); }
+
+    .btn-submit {
+      width: 100%;
+      padding: 13px;
+      background: var(--accent);
+      color: #0d1a14;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Sora', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all 0.15s;
+      letter-spacing: 0.03em;
+    }
+
+    .btn-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-submit:active { transform: translateY(0); }
+
+    .toggle {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .toggle span {
+      color: var(--accent);
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .toggle span:hover { text-decoration: underline; }
+
+    .error-msg {
+      margin-top: 14px;
+      padding: 10px 14px;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--danger);
+      display: none;
+    }
+
+    .error-msg.visible { display: block; }
+  </style>
+</head>
+
+<body>
+<div class="card">
+  <div class="logo-row">
+    <div class="logo-dot"></div>
+    <span class="logo-text">Spend Lens</span>
+  </div>
+
+  <h2 id="formTitle">Welcome back</h2>
+  <p class="subtitle" id="formSubtitle">Sign in to see your expenses, refunds and cashbacks</p>
+
+  <div class="field">
+    <label>Email</label>
+    <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+  </div>
+
+  <div class="field">
+    <label>Password</label>
+    <input type="password" id="password" placeholder="••••••••" autocomplete="current-password"
+           onkeydown="if(event.key==='Enter') submitForm()">
+  </div>
+
+  <button class="btn-submit" id="submitBtn" onclick="submitForm()">Sign In</button>
+
+  <div class="toggle">
+    <span id="toggleText" onclick="toggleForm()">Don't have an account? Register</span>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+</div>
+
+<script>
+let isLogin = true;
+
+function toggleForm() {
+  isLogin = !isLogin;
+  document.getElementById('formTitle').textContent     = isLogin ? 'Welcome back' : 'Create account';
+  document.getElementById('formSubtitle').textContent  = isLogin ? 'Sign in to see your refunds and cashback' : 'Start tracking your expenses for free';
+  document.getElementById('submitBtn').textContent     = isLogin ? 'Sign In' : 'Create Account';
+  document.getElementById('toggleText').textContent    = isLogin ? "Don't have an account? Register" : 'Already have an account? Sign In';
+  document.getElementById('password').autocomplete     = isLogin ? 'current-password' : 'new-password';
+  hideError();
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+
+function hideError() {
+  document.getElementById('errorMsg').classList.remove('visible');
+}
+
+async function submitForm() {
+  hideError();
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const btn      = document.getElementById('submitBtn');
+
+  if (!email || !password) { showError('Please enter your email and password.'); return; }
+
+  btn.textContent = isLogin ? 'Signing in…' : 'Creating account…';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(isLogin ? '/api/login' : '/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showError(data.message || 'Something went wrong.');
+      return;
+    }
+
+    if (isLogin) {
+      window.location.href = '/dashboard.html';
+    } else {
+      toggleForm();
+      document.getElementById('email').value = email;
+    }
+  } catch (err) {
+    showError('Network error. Please try again.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = isLogin ? 'Sign In' : 'Create Account';
+  }
+}
+</script>
+</body>
+</html>

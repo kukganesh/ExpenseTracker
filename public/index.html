@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Spend Lens</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #151820;
+      --border: rgba(255,255,255,0.07);
+      --accent: #22d3a5;
+      --accent2: #a78bfa;
+      --text: #e8eaf0;
+      --muted: #6b7280;
+      --danger: #ef4444;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Sora', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    /* Subtle grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .card {
+      position: relative;
+      z-index: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 420px;
+      padding: 40px 36px;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .logo-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 14px var(--accent);
+      animation: pulse 2.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.6; }
+    }
+
+    .logo-text {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    .accent { color: var(--accent); }
+
+    .tagline {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 13px;
+      border-radius: 10px;
+      border: none;
+      font-family: 'Sora', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      letter-spacing: 0.02em;
+    }
+
+    .btn:hover { transform: translateY(-2px); }
+    .btn:active { transform: translateY(0); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #0d1a14;
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: rgba(255,255,255,0.15);
+    }
+
+    .btn-danger {
+      background: rgba(239,68,68,0.1);
+      color: var(--danger);
+      border: 1px solid rgba(239,68,68,0.2);
+    }
+
+    .divider {
+      margin: 24px 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .divider span {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .footer {
+      margin-top: 28px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .footer a { color: var(--accent); text-decoration: none; }
+
+    /* Loading skeleton */
+    .skeleton {
+      height: 46px;
+      border-radius: 10px;
+      background: linear-gradient(90deg, var(--surface) 25%, rgba(255,255,255,0.04) 50%, var(--surface) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+  </style>
+</head>
+
+<body>
+<div class="card">
+  <div class="logo-row">
+    <div class="logo-dot"></div>
+    <span class="logo-text">Spend Lens</span>
+  </div>
+
+  <h1>Track Your<br><span class="accent">Expenses</span></h1>
+  <p class="tagline">Automatically scans your Gmail for expenses, refunds and cashback.</p>
+
+  <div id="buttons" class="btn-group">
+    <!-- skeleton while loading -->
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+  </div>
+
+  <div class="footer">
+    Built by Ganesh &nbsp;·&nbsp;
+    <a href="#" onclick="return false;">Privacy</a>
+  </div>
+</div>
+
+<script>
+async function loadHome() {
+  const res = await fetch('/api/status', { credentials: 'include' });
+  const data = await res.json();
+  const container = document.getElementById('buttons');
+
+  if (!data.loggedIn) {
+    container.innerHTML = `
+      <button class="btn btn-primary" onclick="window.location.href='/auth.html'">Sign In / Register</button>
+    `;
+  } else {
+    container.innerHTML = `
+      <button class="btn btn-primary" onclick="window.location.href='/dashboard.html'">Go to Dashboard →</button>
+      <button class="btn btn-secondary" onclick="window.location.href='/auth/google'">Connect Gmail</button>
+      <button class="btn btn-secondary" onclick="syncNow(this)">Sync Now</button>
+      <button class="btn btn-danger" onclick="logout()">Sign Out</button>
+    `;
+  }
+}
+
+async function syncNow(btn) {
+  btn.textContent = 'Syncing…';
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/gmail/import', { credentials: 'include' });
+    const data = await res.json();
+    if (!res.ok) { alert(data.message || 'Sync failed'); return; }
+    alert(`✓ Imported ${data.imported_count} new transactions (${data.duplicate_count} duplicates)`);
+  } catch (e) {
+    alert('Network error. Please try again.');
+  } finally {
+    btn.textContent = 'Sync Now';
+    btn.disabled = false;
+  }
+}
+
+async function logout() {
+  await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+  window.location.reload();
+}
+
+loadHome();
+
+const params = new URLSearchParams(window.location.search);
+if (params.get('connected') === 'true') {
+  setTimeout(() => alert('Gmail connected successfully ✓'), 200);
+  history.replaceState(null, '', '/');
+}
+</script>
+</body>
+</html>
