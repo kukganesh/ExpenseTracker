@@ -19,14 +19,49 @@ const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
 app.use('/api/', limiter);
 
 // ─── 2. Database Setup ───
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10
-});
+// ══════════════════════════════════════════════════════════════════════════════
+//  DATABASE CONNECTION (Updated for Cloud/Aiven)
+// ══════════════════════════════════════════════════════════════════════════════
+
+let dbConfig;
+
+// Option A: Use the single long URL if you added DATABASE_URL in Render
+if (process.env.DATABASE_URL) {
+  console.log('🔗 Connecting via DATABASE_URL...');
+  dbConfig = process.env.DATABASE_URL; 
+} 
+// Option B: Use individual variables (Host, User, Password...)
+else {
+  console.log(`🔗 Connecting to Host: ${process.env.DB_HOST}`);
+  console.log(`🔌 Connecting to Port: ${process.env.DB_PORT}`); // Check your logs! Is this 3306 or the Aiven port?
+  
+  dbConfig = {
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT,
+    ssl: { rejectUnauthorized: false }, // 👈 CRITICAL for Aiven to prevent handshake errors
+    waitForConnections: true,
+    connectionLimit: 5,
+    queueLimit: 0
+  };
+}
+
+const pool = mysql.createPool(dbConfig);
+
+// Test the connection immediately on startup
+pool.getConnection()
+  .then(conn => {
+    console.log('✅ Database Connected Successfully!');
+    conn.release();
+  })
+  .catch(err => {
+    console.error('❌ Database Connection Failed:', err.message);
+    console.error('⚠️  Check if Aiven "Allowed IP" is set to 0.0.0.0/0');
+  });
+
+// ══════════════════════════════════════════════════════════════════════════════
 
 // TEST CONNECTION
 pool.getConnection()
