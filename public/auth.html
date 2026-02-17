@@ -1,44 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Spend Lens – Login</title>
+  <title>Expense Eye – Login</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0d0f14;
-      --surface: #151820;
-      --surface2: #1c2030;
-      --border: rgba(255,255,255,0.07);
-      --accent: #22d3a5;
-      --text: #e8eaf0;
-      --muted: #6b7280;
-      --danger: #ef4444;
-    }
+  /* Velvet Petrol Background */
+  --bg: #0e1418;
+  --bg-mesh:
+    radial-gradient(ellipse 90% 70% at 15% 10%, rgba(28, 74, 89, 0.6) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 60% at 85% 5%, rgba(63, 39, 92, 0.5) 0%, transparent 65%),
+    radial-gradient(ellipse 70% 60% at 50% 100%, rgba(20, 60, 75, 0.5) 0%, transparent 65%),
+    radial-gradient(circle at 40% 40%, rgba(124,92,255,0.08), transparent 40%),
+    linear-gradient(160deg, #0c1317 0%, #0f1c22 40%, #0e161c 100%);
+
+
+  /* Glass */
+  --glass: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+
+  /* Text */
+  --text: #e6f0f3;
+  --muted: #8ea4ad;
+
+  /* Accent */
+  --accent: #7c5cff;
+  --danger: #ff6b6b;
+
+  --radius: 20px;
+}
+
+
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Sora', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
+  font-family: 'Sora', sans-serif;
+  background: var(--bg);
+  background-image: var(--bg-mesh);
+  background-attachment: fixed;
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
 
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      width: 100%;
-      max-width: 380px;
-      padding: 36px 32px;
-      box-shadow: 0 24px 60px rgba(0,0,0,0.4);
-    }
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  opacity: 0.25;
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 30% 30%, rgba(124,92,255,0.06), transparent 60%);
+  animation: drift 18s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes drift {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(40px, 30px) scale(1.1); }
+}
+
+
+
+.card {
+  position: relative;
+  z-index: 1;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 420px;
+  padding: 48px 42px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 40px 100px rgba(0,0,0,0.7);
+}
+
+
+
 
     .logo-row {
       display: flex;
@@ -61,17 +121,21 @@
       letter-spacing: 0.04em;
     }
 
-    h2 {
-      font-size: 22px;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
+   h2 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+
 
     .subtitle {
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 28px;
-    }
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 36px;
+  line-height: 1.6;
+}
+
 
     label {
       display: block;
@@ -87,39 +151,78 @@
       margin-bottom: 16px;
     }
 
-    input {
-      width: 100%;
-      padding: 11px 14px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      font-family: 'DM Mono', monospace;
-      font-size: 14px;
-      outline: none;
-      transition: border-color 0.15s;
-    }
+  input {
+  width: 100%;
+  padding: 14px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 14px;
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  transition: all 0.25s ease;
+}
 
-    input:focus { border-color: var(--accent); }
+input:focus {
+  border-color: #7c5cff;
+  background: rgba(255,255,255,0.08);
+  box-shadow: 0 0 0 4px rgba(124,92,255,0.25);
+}
+
+
+
     input::placeholder { color: var(--muted); }
 
     .btn-submit {
-      width: 100%;
-      padding: 13px;
-      background: var(--accent);
-      color: #0d1a14;
-      border: none;
-      border-radius: 8px;
-      font-family: 'Sora', sans-serif;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      margin-top: 8px;
-      transition: all 0.15s;
-      letter-spacing: 0.03em;
-    }
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #7c5cff, #4f46e5);
+  color: white;
+  border: none;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 18px;
+  transition: all 0.25s ease;
+  letter-spacing: 0.02em;
+}
 
-    .btn-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-submit:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(124,92,255,0.55);
+}
+
+
+
+.eye-icon {
+  width: 28px;
+  height: 16px;
+  border-radius: 50% / 60%;
+  border: 2px solid #7c5cff;
+  position: relative;
+  box-shadow: 0 0 14px rgba(124,92,255,0.5);
+}
+
+.eye-icon::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  background: radial-gradient(circle, #22d3a5, #7c5cff);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: blink 5s infinite;
+}
+
+@keyframes blink {
+  0%, 92%, 100% { transform: translate(-50%, -50%) scaleY(1); }
+  95% { transform: translate(-50%, -50%) scaleY(0.2); }
+}
+
+
     .btn-submit:active { transform: translateY(0); }
 
     .toggle {
@@ -149,51 +252,130 @@
     }
 
     .error-msg.visible { display: block; }
+
+    body {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+body.loaded {
+  opacity: 1;
+}
+
+.form-content {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.form-content.fade-out {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.form-content.fade-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+
+
   </style>
 </head>
 
 <body>
 <div class="card">
   <div class="logo-row">
-    <div class="logo-dot"></div>
-    <span class="logo-text">Spend Lens</span>
+    <div class="eye-icon"></div>
+    <span class="logo-text">Expense Eye</span>
   </div>
 
-  <h2 id="formTitle">Welcome back</h2>
-  <p class="subtitle" id="formSubtitle">Sign in to see your expenses, refunds and cashbacks</p>
+  <div class="form-content" id="formContent">
 
-  <div class="field">
-    <label>Email</label>
-    <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+    <h2 id="formTitle">Welcome back</h2>
+    <p class="subtitle" id="formSubtitle">
+      Sign in to see your expenses, refunds and cashbacks
+    </p>
+
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+    </div>
+
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="••••••••"
+             autocomplete="current-password"
+             onkeydown="if(event.key==='Enter') submitForm()">
+    </div>
+
+    <button class="btn-submit" id="submitBtn" onclick="submitForm()">
+      Sign In
+    </button>
+
+    <div class="toggle">
+      <span id="toggleText" onclick="toggleForm()">
+        Don't have an account? Register
+      </span>
+    </div>
+
+    <div class="error-msg" id="errorMsg"></div>
+
   </div>
-
-  <div class="field">
-    <label>Password</label>
-    <input type="password" id="password" placeholder="••••••••" autocomplete="current-password"
-           onkeydown="if(event.key==='Enter') submitForm()">
-  </div>
-
-  <button class="btn-submit" id="submitBtn" onclick="submitForm()">Sign In</button>
-
-  <div class="toggle">
-    <span id="toggleText" onclick="toggleForm()">Don't have an account? Register</span>
-  </div>
-
-  <div class="error-msg" id="errorMsg"></div>
 </div>
+
 
 <script>
 let isLogin = true;
 
 function toggleForm() {
-  isLogin = !isLogin;
-  document.getElementById('formTitle').textContent     = isLogin ? 'Welcome back' : 'Create account';
-  document.getElementById('formSubtitle').textContent  = isLogin ? 'Sign in to see your refunds and cashback' : 'Start tracking your expenses for free';
-  document.getElementById('submitBtn').textContent     = isLogin ? 'Sign In' : 'Create Account';
-  document.getElementById('toggleText').textContent    = isLogin ? "Don't have an account? Register" : 'Already have an account? Sign In';
-  document.getElementById('password').autocomplete     = isLogin ? 'current-password' : 'new-password';
-  hideError();
+  const content = document.getElementById('formContent');
+
+  // fade out
+  content.classList.add('fade-out');
+
+  setTimeout(() => {
+    isLogin = !isLogin;
+
+    document.getElementById('formTitle').textContent =
+      isLogin ? 'Welcome back' : 'Create account';
+
+    document.getElementById('formSubtitle').textContent =
+      isLogin
+        ? 'Sign in to see your expenses clearly'
+        : 'Start tracking with clarity';
+
+    document.getElementById('submitBtn').textContent =
+      isLogin ? 'Sign In' : 'Create Account';
+
+    document.getElementById('toggleText').textContent =
+      isLogin
+        ? "Don't have an account? Register"
+        : 'Already have an account? Sign In';
+
+    // reset animation
+    content.classList.remove('fade-out');
+    content.classList.add('fade-in');
+
+    setTimeout(() => {
+      content.classList.remove('fade-in');
+    }, 250);
+
+  }, 200);
 }
+
 
 function showError(msg) {
   const el = document.getElementById('errorMsg');
@@ -213,8 +395,9 @@ async function submitForm() {
 
   if (!email || !password) { showError('Please enter your email and password.'); return; }
 
-  btn.textContent = isLogin ? 'Signing in…' : 'Creating account…';
-  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span>`;
+btn.disabled = true;
+
 
   try {
     const res = await fetch(isLogin ? '/api/login' : '/api/register', {
@@ -232,7 +415,7 @@ async function submitForm() {
     }
 
     if (isLogin) {
-      window.location.href = '/dashboard.html';
+      window.location.href = '/';
     } else {
       toggleForm();
       document.getElementById('email').value = email;
@@ -244,6 +427,11 @@ async function submitForm() {
     btn.textContent = isLogin ? 'Sign In' : 'Create Account';
   }
 }
+
+window.addEventListener('DOMContentLoaded', () => {
+  document.body.classList.add('loaded');
+});
+
 </script>
 </body>
 </html>
