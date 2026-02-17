@@ -33,6 +33,7 @@ router.get('/summary', async (req, res) => {
 });
 
 // 2. Get Transactions (List)
+// 2. Get Transactions (List)
 router.get('/', async (req, res) => {
   try {
     let sql = 'SELECT * FROM transactions WHERE user_id = ?';
@@ -45,8 +46,18 @@ router.get('/', async (req, res) => {
     
     sql += ' ORDER BY transaction_date DESC LIMIT 100';
     const [rows] = await req.pool.execute(sql, params);
-    res.json(rows);
-  } catch (e) { res.status(500).json({ message: 'Error' }); }
+
+    // ⬇️ FIX: Convert "String Numbers" back to real Numbers
+    const cleanRows = rows.map(row => ({
+      ...row,
+      amount: parseFloat(row.amount) || 0, // Forces "500.00" to become 500
+    }));
+
+    res.json(cleanRows); // Send the cleaned data
+  } catch (e) { 
+    console.error(e); // Log the error so you can see it in Render logs
+    res.status(500).json({ message: 'Error fetching transactions' }); 
+  }
 });
 
 // 3. Add Manual Transaction (New Feature)
